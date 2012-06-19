@@ -1,0 +1,2 @@
+export PATH=/home/alex/code/ghc-7.4.1/install/bin:/home/alex/code/haskell-platform-2012.2.0.0/install/bin:/home/alex/.cabal/bin:/home/alex/local/bin:$PATH
+export GHC_PACKAGE_PATH=`pwd`/cabal-dev/packages-7.4.1.conf/:
