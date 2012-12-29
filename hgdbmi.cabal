@@ -1,21 +1,65 @@
-Cabal-Version: >= 1.2
-Build-Type: Simple
-Name: hgdbmi
-Version: 0.2
-Synopsis: GDBMI interface (program-driven control of GDB)
+name:           hgdbmi
+category:       Development
+version:        0.2
+license:        BSD3
+cabal-version: >= 1.14
+license-file:   LICENSE
+author:         Alexander Bernauer, Evan Martin
+maintainer:     Alexander Bernauer <acopton@gmail.com>
+stability:      provisional
+homepage:       https://github.com/copton/hgdbmi
+bug-reports:    https://github.com/copton/hgdbmi/issues
+copyright:      (c) 2012 Alexander Bernauer <acopton@gmail.com>, (c) 2008 Evan Martin <martine@danga.com>
+Synopsis:       GDB Machine Interface: program-driven control of GDB
 Description:
-  GDB\/MI lets programs drive GDB.  It can be used, for example, by GDB
-  frontends.  This module wraps attaching GDB to a process and parsing the
-  (surprisingly complicated) GDB\/MI output.
-Category: Development
-License: BSD3
-License-File: LICENSE
-Author: Evan Martin
-Maintainer: martine@danga.com
-Copyright: (c) 2008 Evan Martin <martine@danga.com>
-Homepage: http://neugierig.org/software/darcs/browse/?r=hgdbmi;a=summary
-Extra-Source-Files: Test.hs
+  GDB\/MI lets programs drive GDB. It can be used, for example, by GDB
+  frontends.  This module encapsualtes a GDB subprocess and provides an
+  API to send commands as well as receive both responses and notifications.
+  .
+  The actual GDB behavior diverges from the GDB manual in many points, so the
+  implementation of the Machine Interface highly depends on the GDB version.
+  This module supports GDB version 7.4.
 
-Library
-  Build-Depends: base, parsec, process, unix
-  Exposed-Modules: GDBMI
+build-type:     custom
+tested-with:    GHC == 7.4.2
+extra-source-files:
+  gdb-manual.pdf
+
+source-repository head
+  type: git
+  location: git://github.com/copton/hgdbmi.git
+
+source-repository this
+  type: git
+  location: git://github.com/copton/hgdbmi.git
+  tag: v0.2
+
+library
+  build-depends:
+    base        >= 4 && < 5,
+    parsec      == 3.1.*,
+    process     == 1.1.*,
+    unix        == 2.6.*
+
+  exposed-modules:
+    Gdbmi.IO
+    Gdbmi.Commands
+    Gdbmi.Representation
+    Gdbmi.Responses
+
+  ghc-options:      -Wall
+  hs-source-dirs:   src
+ 
+test-suite pure
+  type:          exitcode-stdio-1.0
+  main-is:       pure.hs
+  other-modules: Lib.hs
+  build-depends:
+    base                 >= 4 && < 5,
+    HUnit                == 1.2.*,
+    test-framework       == 0.6.*,
+    test-framework-hunit == 0.2.*,
+    template-haskell 
+
+  ghc-options:    -Wall
+  hs-source-dirs: tests
