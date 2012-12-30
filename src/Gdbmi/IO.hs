@@ -157,7 +157,7 @@ handleKill ctx action = catchJust select action handler
 
 writeCommand :: Context -> R.Command -> R.Token -> IO () -- {{{2
 writeCommand ctx cmd token = 
-  let cmdstr = (R.render_command . C.add_token token) cmd in
+  let cmdstr = (R.render_command . C.set_token token) cmd in
   do
     debugLog ctx True cmdstr
     hPutStr (ctxCommandPipe ctx) cmdstr

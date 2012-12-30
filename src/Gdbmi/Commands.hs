@@ -7,164 +7,179 @@ module Gdbmi.Commands
   -- * Commands
   -- ** Breakpoint Commands
   -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Breakpoint-Commands.html>
-    break_after,
-    break_commands,
-    break_condition,
-    break_delete,
-    break_disable,
-    break_enable,
-    break_info,
-    break_insert,
-    break_list,
-    break_passcount,
-    break_watch,
+  break_after,
+  break_commands,
+  break_condition,
+  break_delete,
+  break_disable,
+  break_enable,
+  break_info,
+  break_insert,
+  break_list,
+  break_passcount,
+  break_watch,
 
   -- ** Program Context
-    exec_arguments,
-    environment_cd,
-    environment_directory,
-    environment_path,
-    environment_pwd,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Program-Context.html>
+  exec_arguments,
+  environment_cd,
+  environment_directory,
+  environment_path,
+  environment_pwd,
 
   -- ** Thread Commands
-    thread_info,
-    thread_list_ids,
-    thread_select,
-  
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Thread-Commands.html>
+  thread_info,
+  thread_list_ids,
+  thread_select,
+
   -- ** Ada Tasking Commands
-    ada_task_info,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Ada-Tasking-Commands.html>
+  ada_task_info,
 
   -- ** Program Execution
-    exec_continue,
-    exec_finish,
-    exec_interrupt,
-    exec_jump,
-    exec_next,
-    exec_next_instruction,
-    exec_return,
-    exec_run,
-    exec_step,
-    exec_step_instruction,
-    exec_until,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Program-Execution.html>
+  exec_continue,
+  exec_finish,
+  exec_interrupt,
+  exec_jump,
+  exec_next,
+  exec_next_instruction,
+  exec_return,
+  exec_run,
+  exec_step,
+  exec_step_instruction,
+  exec_until,
 
   -- ** Stack Manipulation
-    stack_info_frame,
-    stack_info_depth,
-    stack_list_arguments,
-    stack_list_arguments',
-    stack_list_frames,
-    stack_list_locals,
-    stack_list_locals',
-    stack_list_variables,
-    stack_list_variables',
-    stack_select_frame,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Stack-Manipulation.html>
+  stack_info_frame,
+  stack_info_depth,
+  stack_list_arguments,
+  stack_list_arguments',
+  stack_list_frames,
+  stack_list_locals,
+  stack_list_locals',
+  stack_list_variables,
+  stack_list_variables',
+  stack_select_frame,
 
   -- ** Variable Objects
-    enable_pretty_printing,
-    var_create,
-    var_delete,
-    var_set_format,
-    var_gdbShow_format,
-    var_info_num_children,
-    var_list_children,
-    var_list_children',
-    var_info_type,
-    var_info_expression,
-    var_info_path_expressoin,
-    var_gdbShow_attributes,
-    var_evaluate_expression,
-    var_assign,
-    var_update,
-    var_set_frozen,
-    var_set_update_range,
-    var_set_visualizer,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Variable-Objects.html>
+  enable_pretty_printing,
+  var_create,
+  var_delete,
+  var_set_format,
+  var_gdbShow_format,
+  var_info_num_children,
+  var_list_children,
+  var_list_children',
+  var_info_type,
+  var_info_expression,
+  var_info_path_expressoin,
+  var_gdbShow_attributes,
+  var_evaluate_expression,
+  var_assign,
+  var_update,
+  var_set_frozen,
+  var_set_update_range,
+  var_set_visualizer,
 
   -- ** Data Manipulation
-    data_disassemble,
-    data_evaluate_expression,
-    data_list_changed_registers,
-    data_list_register_names,
-    data_list_register_values,
-    data_read_memory,
-    data_read_memory_bytes,
-    data_write_memory_bytes,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Data-Manipulation.html>
+  data_disassemble,
+  data_evaluate_expression,
+  data_list_changed_registers,
+  data_list_register_names,
+  data_list_register_values,
+  data_read_memory,
+  data_read_memory_bytes,
+  data_write_memory_bytes,
 
   -- ** Tracepoint Commands
-    trace_find,
-    trace_define_variable,
-    trace_list_variables,
-    trace_save,
-    trace_start,
-    trace_status,
-    trace_stop,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Tracepoint-Commands.html>
+  trace_find,
+  trace_define_variable,
+  trace_list_variables,
+  trace_save,
+  trace_start,
+  trace_status,
+  trace_stop,
 
   -- ** Symbol Query
-    symbol_list_lines,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Symbol-Query.html>
+  symbol_list_lines,
 
   -- ** File Commands
-    file_exec_and_symbols,
-    file_exec_file,
-    file_list_exec_source_file,
-    file_list_exec_source_files,
-    file_symbol_file,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-File-Commands.html>
+  file_exec_and_symbols,
+  file_exec_file,
+  file_list_exec_source_file,
+  file_list_exec_source_files,
+  file_symbol_file,
 
   -- ** Target Manipulation
-    target_attach,
-    target_detach,
-    target_disconnect,
-    target_download,
-    target_select,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Target-Manipulation.html>
+  target_attach,
+  target_detach,
+  target_disconnect,
+  target_download,
+  target_select,
 
   -- ** File Transfer Commands
-    target_file_put,
-    target_file_get,
-    target_file_delete,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-File-Transfer-Commands.html>
+  target_file_put,
+  target_file_get,
+  target_file_delete,
 
   -- ** Miscellaneous Commmands
-    gdb_exit,
-    gdb_set,
-    gdb_gdbShow,
-    gdb_version,
-    list_features,
-    list_target_features,
-    list_thread_groups,
-    info_os,
-    add_inferior,
-    interpreter_exec,
-    inferior_tty_set,
-    inferior_tty_gdbShow,
-    enable_timings,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Miscellaneous-Commands.html>
+  gdb_exit,
+  gdb_set,
+  gdb_gdbShow,
+  gdb_version,
+  list_features,
+  list_target_features,
+  list_thread_groups,
+  info_os,
+  add_inferior,
+  interpreter_exec,
+  inferior_tty_set,
+  inferior_tty_gdbShow,
+  enable_timings,
 
-  -- * Types
+  -- * Auxiliary Types
   -- ** Location
-    Location,
-    positive_offset_location,
-    negative_offset_location,
-    file_line_location,
-    function_location,
-    function_label_location,
-    file_function_location,
-    label_location,
-    plain_address_location,
-    expr_address_location,
-    func_address_location,
-    file_func_address_location,
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/Specify-Location.html>.
+  Location,
+  positive_offset_location,
+  negative_offset_location,
+  file_line_location,
+  function_location,
+  function_label_location,
+  file_function_location,
+  label_location,
+  plain_address_location,
+  expr_address_location,
+  func_address_location,
+  file_func_address_location,
 
-  -- ** Miscellaneous Types
-  PrintValues,
-  FrameSelect,
-  FormatSpec,
-  FrozenFlag,
-  DisassemblyMode,
-  DataFormat,
-  OutputFormat,
-  TraceMode,
-  Target,
-  Medium,
-  Interpreter,
+  -- ** Other Types
+  -- | See the documentation of the commands that use these types for their semantics.
+  PrintValues(..),
+  FrameSelect(..),
+  FormatSpec(..),
+  FrozenFlag(..),
+  DisassemblyMode(..),
+  DataFormat(..),
+  OutputFormat(..),
+  TraceMode(..),
+  Target(..),
+  Medium(..),
+  Interpreter(..),
    
-  -- * Miscellaneous Functions
-  add_token
+  -- * Internal Functions
+  set_token
 ) where
 
 -- imports {{{1
@@ -186,32 +201,34 @@ instance GdbShow a => GdbShow [a] where
 instance GdbShow Int where
   gdbShow = show
 
-type Location = String -- {{{2
-  -- ^ A location of the code. See <http://sourceware.org/gdb/current/onlinedocs/gdb/Specify-Location.html>.
+newtype Location = Location String -- {{{2
+
+instance GdbShow Location where -- {{{3
+  gdbShow (Location location) = location 
 
 positive_offset_location :: Int -> Location -- {{{3
-positive_offset_location offset = "+" ++ gdbShow offset
+positive_offset_location offset = Location $ "+" ++ gdbShow offset
 
 negative_offset_location :: Int -> Location -- {{{3
-negative_offset_location offset = "-" ++ gdbShow offset
+negative_offset_location offset = Location $ "-" ++ gdbShow offset
 
 file_line_location :: String -> Int -> Location -- {{{3
-file_line_location filename linenum = filename ++ ":" ++ gdbShow linenum
+file_line_location filename linenum = Location $ filename ++ ":" ++ gdbShow linenum
 
 function_location :: String -> Location -- {{{3
-function_location = id
+function_location = Location
 
 function_label_location :: String -> String -> Location -- {{{3
-function_label_location function label = function ++ ":" ++ label
+function_label_location function label = Location $ function ++ ":" ++ label
 
 file_function_location :: String -> String -> Location -- {{{3
-file_function_location filename function = filename ++ ":" ++ function
+file_function_location filename function = Location $ filename ++ ":" ++ function
 
 label_location :: String -> Location -- {{{3
-label_location = id
+label_location = Location
 
 plain_address_location :: String -> Location -- {{{3
-plain_address_location = ("*"++)
+plain_address_location addr = Location $ "*" ++ addr
 
 expr_address_location :: String -> Location -- {{{3
 expr_address_location = plain_address_location
@@ -220,12 +237,12 @@ func_address_location :: String -> Location -- {{{3
 func_address_location = plain_address_location
 
 file_func_address_location :: String -> String -> Location -- {{{3
-file_func_address_location filename funcaddr = "'" ++ filename ++ "'::" ++ funcaddr
+file_func_address_location filename funcaddr = Location $ "'" ++ filename ++ "'::" ++ funcaddr
 
 data PrintValues -- {{{2
-  = NoValues
-  | AllValues
-  | SimpleValues
+  = NoValues     -- ^ \"--no-values\"     or \"0\"
+  | AllValues    -- ^ \"--all-values\"    or \"1\"
+  | SimpleValues -- ^ \"--simple-values\" or \"2\"
 
 instance GdbShow PrintValues where
   gdbShow NoValues     = "--no-values"
@@ -239,9 +256,9 @@ mapPrintValues f 2 = f SimpleValues
 mapPrintValues _ _ = error "valid integers for the print-value parameter range from 0 to 2 only"
 
 data FrameSelect -- {{{2
-  = FrameAddr String
-  | CurrentFrame
-  | Floating
+  = FrameAddr String -- ^ just the given address
+  | CurrentFrame     -- ^ \"*\"
+  | Floating         -- ^ \"\@\"
 
 instance GdbShow FrameSelect where
   gdbShow (FrameAddr addr) = addr
@@ -249,11 +266,11 @@ instance GdbShow FrameSelect where
   gdbShow Floating = "@"
 
 data FormatSpec -- {{{2
-  = Binary
-  | Decimal
-  | Hexadecimal
-  | Octal
-  | Natural
+  = Binary      -- ^ \"binary\"
+  | Decimal     -- ^ \"decimal\"
+  | Hexadecimal -- ^ \"hexadecimal\"
+  | Octal       -- ^ \"octal\"
+  | Natural     -- ^ \"natural\"
 
 instance GdbShow FormatSpec where
   gdbShow Binary = "binary"
@@ -263,15 +280,15 @@ instance GdbShow FormatSpec where
   gdbShow Natural = "natural"
 
 data FrozenFlag -- {{{2
-  = Frozen
-  | Unfrozen
+  = Frozen   -- ^ \"1\"
+  | Unfrozen -- ^ \"0\"
 
 instance GdbShow FrozenFlag where
   gdbShow Frozen = "1"
   gdbShow Unfrozen = "0"
 
 data DisassemblyMode -- {{{2
-  = DisassemblyMode Bool Bool -- mixed source and disassembly, raw opcodes
+  = DisassemblyMode Bool Bool -- ^ with mixed source?, with raw opcodes?
 
 instance GdbShow DisassemblyMode where
   gdbShow (DisassemblyMode False False) = "0"
@@ -280,12 +297,12 @@ instance GdbShow DisassemblyMode where
   gdbShow (DisassemblyMode True True) = "3"
 
 data DataFormat -- {{{2
-  = DHexadecimal
-  | DOctal
-  | DBinary
-  | DDecimal
-  | DRaw
-  | DNatural
+  = DHexadecimal -- ^ \"x\"
+  | DOctal       -- ^ \"o\"
+  | DBinary      -- ^ \"t\"
+  | DDecimal     -- ^ \"d\"
+  | DRaw         -- ^ \"r\"
+  | DNatural     -- ^ \"N\"
 
 instance GdbShow DataFormat where
   gdbShow DHexadecimal = "x"
@@ -296,16 +313,16 @@ instance GdbShow DataFormat where
   gdbShow DNatural = "N"
 
 data OutputFormat -- {{{2
-  = HexadecimalInteger
-  | SignedDecimalInteger
-  | UnsignedDecimalInteger
-  | OctalInteger
-  | BinaryInteger
-  | Address
-  | CharacterConstantInteger
-  | FloatingPointNumber
-  | OString
-  | Raw
+  = HexadecimalInteger        -- ^ \"x\"
+  | SignedDecimalInteger      -- ^ \"d\"
+  | UnsignedDecimalInteger    -- ^ \"u\"
+  | OctalInteger              -- ^ \"o\"
+  | BinaryInteger             -- ^ \"t\"
+  | Address                   -- ^ \"a\"
+  | CharacterConstantInteger  -- ^ \"c\"
+  | FloatingPointNumber       -- ^ \"f\"
+  | OString                   -- ^ \"s\"
+  | Raw                       -- ^ \"r\"
 
 instance GdbShow OutputFormat where
   gdbShow HexadecimalInteger = "x"
@@ -320,13 +337,13 @@ instance GdbShow OutputFormat where
   gdbShow Raw = "r"
 
 data TraceMode -- {{{2
-  = None
-  | FrameNumber Int
-  | TracepointNumber Int
-  | PC String
-  | PCInsideRange String String
-  | PCOutsideRange String String
-  | Line Location
+  = None                          -- ^ \"none\"
+  | FrameNumber Int               -- ^ \"frame-number\"
+  | TracepointNumber Int          -- ^ \"tracepoint-number\"
+  | PC String                     -- ^ \"pc\"
+  | PCInsideRange String String   -- ^ \"pc-inside-range\"
+  | PCOutsideRange String String  -- ^ \"pc-outside-range\"
+  | Line Location                 -- ^ \"line\"
 
 instance GdbShow TraceMode where
   gdbShow None = "none"
@@ -347,11 +364,11 @@ traceModeOptions (PCOutsideRange x y) = [opt x, opt y]
 traceModeOptions (Line x) = [opt x]
 
 data Target -- {{{2
-  = Exec FilePath
-  | Core FilePath
-  | Remote Medium
-  | Sim [String]
-  | Nrom
+  = Exec FilePath  -- ^ \"exec\"
+  | Core FilePath  -- ^ \"core\"
+  | Remote Medium  -- ^ \"remote\"
+  | Sim [String]   -- ^ \"sim\"
+  | Nrom           -- ^ \"nrom\"
 
 instance GdbShow Target where
   gdbShow (Exec _) = "exec" 
@@ -368,10 +385,10 @@ targetOptions (Sim xs) = map opt xs
 targetOptions Nrom = []
   
 data Medium -- {{{2
-  = SerialDevice String
-  | TcpHost String Int
-  | UdpHost String Int
-  | Pipe String
+  = SerialDevice String  -- ^ just the given device
+  | TcpHost String Int   -- ^ \"tcp:%s:%d\" host port
+  | UdpHost String Int   -- ^ \"udp:%s:%d\" host port
+  | Pipe String          -- ^ \"|%s\" command
 
 instance GdbShow Medium where
   gdbShow (SerialDevice device) = device
@@ -380,10 +397,10 @@ instance GdbShow Medium where
   gdbShow (Pipe command) = "| " ++ command
 
 data Interpreter -- {{{2
-  = Console
-  | MI
-  | MI2
-  | MI1
+  = Console -- ^ \"console\"
+  | MI      -- ^ \"mi\"
+  | MI2     -- ^ \"mi2\"
+  | MI1     -- ^ \"mi1\"
 
 instance GdbShow Interpreter where
   gdbShow Console = "console"
@@ -392,13 +409,14 @@ instance GdbShow Interpreter where
   gdbShow MI1 = "mi1"
    
 -- helper {{{1
-add_token :: Token -> Command -> Command -- {{{2
-add_token token (MICommand _ x y z) = MICommand (Just token) x y z
-add_token token (CLICommand _ x) = CLICommand (Just token) x
-
--- add_parameters :: [Parameter] -> Command -> Command -- {{{2
--- add_parameters ps (MICommand x y z ps') = MICommand x y z (ps'++ps)
--- add_parameters ps (CLICommand t s) = CLICommand t (s ++ intercalate " " ps)
+set_token :: Token -> Command -> Command -- {{{2
+-- | Set the token of a command.
+-- <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Input-Syntax.html>
+--
+-- Newly created commands have no token, but setting a token manually is usually not necessary.
+-- 'Gdbmi.IO.send_command' will assign a unique token to a given command in any case.
+set_token token (MICommand _ x y z) = MICommand (Just token) x y z
+set_token token (CLICommand _ x) = CLICommand (Just token) x
 
 -- commands {{{1
 -- breakpoint commands {{{2
