@@ -1,4 +1,171 @@
-module Gdbmi.Commands where
+-- | Constructor functions for 'Gdmi.Commands.Command' values.
+-- 
+-- Please consult the GDB\/MI documentation for the semantics of the commands.
+module Gdbmi.Commands
+-- {{{1 exports
+(
+  -- * Commands
+  -- ** Breakpoint Commands
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Breakpoint-Commands.html>
+    break_after,
+    break_commands,
+    break_condition,
+    break_delete,
+    break_disable,
+    break_enable,
+    break_info,
+    break_insert,
+    break_list,
+    break_passcount,
+    break_watch,
+
+  -- ** Program Context
+    exec_arguments,
+    environment_cd,
+    environment_directory,
+    environment_path,
+    environment_pwd,
+
+  -- ** Thread Commands
+    thread_info,
+    thread_list_ids,
+    thread_select,
+  
+  -- ** Ada Tasking Commands
+    ada_task_info,
+
+  -- ** Program Execution
+    exec_continue,
+    exec_finish,
+    exec_interrupt,
+    exec_jump,
+    exec_next,
+    exec_next_instruction,
+    exec_return,
+    exec_run,
+    exec_step,
+    exec_step_instruction,
+    exec_until,
+
+  -- ** Stack Manipulation
+    stack_info_frame,
+    stack_info_depth,
+    stack_list_arguments,
+    stack_list_arguments',
+    stack_list_frames,
+    stack_list_locals,
+    stack_list_locals',
+    stack_list_variables,
+    stack_list_variables',
+    stack_select_frame,
+
+  -- ** Variable Objects
+    enable_pretty_printing,
+    var_create,
+    var_delete,
+    var_set_format,
+    var_gdbShow_format,
+    var_info_num_children,
+    var_list_children,
+    var_list_children',
+    var_info_type,
+    var_info_expression,
+    var_info_path_expressoin,
+    var_gdbShow_attributes,
+    var_evaluate_expression,
+    var_assign,
+    var_update,
+    var_set_frozen,
+    var_set_update_range,
+    var_set_visualizer,
+
+  -- ** Data Manipulation
+    data_disassemble,
+    data_evaluate_expression,
+    data_list_changed_registers,
+    data_list_register_names,
+    data_list_register_values,
+    data_read_memory,
+    data_read_memory_bytes,
+    data_write_memory_bytes,
+
+  -- ** Tracepoint Commands
+    trace_find,
+    trace_define_variable,
+    trace_list_variables,
+    trace_save,
+    trace_start,
+    trace_status,
+    trace_stop,
+
+  -- ** Symbol Query
+    symbol_list_lines,
+
+  -- ** File Commands
+    file_exec_and_symbols,
+    file_exec_file,
+    file_list_exec_source_file,
+    file_list_exec_source_files,
+    file_symbol_file,
+
+  -- ** Target Manipulation
+    target_attach,
+    target_detach,
+    target_disconnect,
+    target_download,
+    target_select,
+
+  -- ** File Transfer Commands
+    target_file_put,
+    target_file_get,
+    target_file_delete,
+
+  -- ** Miscellaneous Commmands
+    gdb_exit,
+    gdb_set,
+    gdb_gdbShow,
+    gdb_version,
+    list_features,
+    list_target_features,
+    list_thread_groups,
+    info_os,
+    add_inferior,
+    interpreter_exec,
+    inferior_tty_set,
+    inferior_tty_gdbShow,
+    enable_timings,
+
+  -- * Types
+  -- ** Location
+    Location,
+    positive_offset_location,
+    negative_offset_location,
+    file_line_location,
+    function_location,
+    function_label_location,
+    file_function_location,
+    label_location,
+    plain_address_location,
+    expr_address_location,
+    func_address_location,
+    file_func_address_location,
+
+  -- ** Miscellaneous Types
+  PrintValues,
+  FrameSelect,
+  FormatSpec,
+  FrozenFlag,
+  DisassemblyMode,
+  DataFormat,
+  OutputFormat,
+  TraceMode,
+  Target,
+  Medium,
+  Interpreter,
+   
+  -- * Miscellaneous Functions
+  add_token
+) where
 
 -- imports {{{1
 import Data.List (intersperse)
@@ -20,6 +187,7 @@ instance GdbShow Int where
   gdbShow = show
 
 type Location = String -- {{{2
+  -- ^ A location of the code. See <http://sourceware.org/gdb/current/onlinedocs/gdb/Specify-Location.html>.
 
 positive_offset_location :: Int -> Location -- {{{3
 positive_offset_location offset = "+" ++ gdbShow offset
@@ -303,7 +471,9 @@ thread_list_ids = cmd "thread-list-ids" []
 thread_select :: Int -> Command -- {{{3
 thread_select threadnum = cmd "thread-select" [opt threadnum]
 
--- ada tasking commands -- TODO {{{2
+-- ada tasking commands {{{2
+ada_task_info :: Maybe Int -> Command -- {{{3
+ada_task_info taskId = cmd "ada-task-info" $ fmap opt taskId ?: []
 
 -- program execution {{{2
 exec_continue :: Bool -> Either Bool Int -> Command -- {{{3
