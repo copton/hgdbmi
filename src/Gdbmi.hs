@@ -1,4 +1,4 @@
-module Gdbmi
+module Gdbmi where
 
 import Gdbmi.IO
 import Gdbmi.Representation
