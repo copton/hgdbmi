@@ -4,9 +4,12 @@ module Main (main) where
 -- imports {{{1
 import Gdbmi.Representation
 import Gdbmi.Responses
-import Lib                  (enumTestGroup, paste)
-import Test.Framework       (Test, defaultMain)
-import Test.HUnit           ((@=?), Assertion)
+import Test.Framework                 (Test, defaultMain, testGroup)
+import Test.Framework.Providers.HUnit (testCase)
+import Test.HUnit                     ((@=?), Assertion)
+import Text.Printf                    (printf)
+
+import Paste                          (paste)
 
 main :: IO () -- {{{1
 main = defaultMain [
@@ -338,3 +341,7 @@ test_response_error = enumTestGroup "response_error" $ map runTest [
 -- utils {{{1
 qp :: String -> Parameter
 qp = QuotedString
+
+enumTestGroup :: String -> [Assertion] -> Test
+enumTestGroup name =
+  testGroup name . zipWith (testCase . printf "%.2d") [(1 :: Int)..]

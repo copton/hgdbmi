@@ -55,9 +55,12 @@ library
   default-language: Haskell2010
  
 test-suite pure
-  type:          exitcode-stdio-1.0
-  main-is:       pure.hs
-  other-modules: Lib
+  type:             exitcode-stdio-1.0
+  main-is:          pure.hs
+  other-modules:    Paste
+  hs-source-dirs:   tests
+  ghc-options:      -Wall
+  default-language: Haskell2010
   build-depends:
     hgdbmi,
     base                 >= 4 && < 5,
@@ -66,6 +69,17 @@ test-suite pure
     test-framework-hunit == 0.2.*,
     template-haskell 
 
+
+test-suite io
+  type:             exitcode-stdio-1.0
+  main-is:          io.hs
+  other-modules:    Paste
   hs-source-dirs:   tests
   ghc-options:      -Wall
   default-language: Haskell2010
+  build-depends:
+    hgdbmi,
+    base                 >= 4 && < 5,
+    directory            == 1.2.*,
+    temporary            == 1.1.*,
+    template-haskell 
