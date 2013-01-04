@@ -1,9 +1,31 @@
-module Gdbmi.Responses where
+-- | Data structures and conversion functions for GDB command responses.
+--  
+-- While working with 'Gdbmi.Representation.Response' and 'Gdbmi.Representation.Notification' is always possible in general, handling the generic 'Gdbmi.Representation.Result' lists is cumbersome. This module provides convenient data types instead to facilitate pattern matching etc..
+--  
+-- This module is incomplete, as we only implemented what we needed up to now.
+module Gdbmi.Responses
+-- export {{{1
+(
+  -- * Conversion Functions  
+  -- | A conversion fails if the result list does not contain the expected values.
+  response_break_insert,
+  response_var_evaluate_expression,
+  response_exec_return,
+  response_stack_list_frames,
+  response_error,
+  response_stopped,
+  -- * Types
+  -- | Please consult the GDB manual for details on the returned responses.
+  Breakpoint(..), BreakpointType, BreakpointDisp(..),
+  Stack(..), Frame(..), Arg(..),
+  Stopped(..), StopReason(..)
+) where
 
 -- import {{{1
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (guard, msum, (<=<))
 import Data.List (find)
+
 import Gdbmi.Representation
 
 -- types {{{1
@@ -153,33 +175,38 @@ responseArg rs = do
 
 -- responses {{{1
 response_stack_list_frames :: [Result] -> Maybe Stack -- {{{2
+-- | Convert the result list of a 'Gdbmi.Commands.stack_list_frames' command response.
 response_stack_list_frames [item] = responseStack item
 response_stack_list_frames _      = Nothing
 
 response_break_insert :: [Result] -> Maybe Breakpoint -- {{{2
+-- | Convert the result list of a 'Gdbmi.Commands.break_insert' command response.
 response_break_insert [item] = responseBreakpoint item
 response_break_insert _      = Nothing
 
-response_data_evaluate_expression :: [Result] -> Maybe String -- {{{2
-response_data_evaluate_expression [(Result variable value)] = do
+response_var_evaluate_expression :: [Result] -> Maybe String -- {{{2
+-- | Convert the result list of a 'Gdbmi.Commands.var_evaluate_expression' command response.
+response_var_evaluate_expression [(Result variable value)] = do
   guard  (variable == "value")
   asConst value
+response_var_evaluate_expression _ = Nothing
 
-response_data_evaluate_expression _ = Nothing -- {{{2
+response_exec_return :: [Result] -> Maybe Frame -- {{{2
+-- | Convert the result list of a 'Gdbmi.Commands.exec_return' command response.
+response_exec_return [item] = responseFrame item
+response_exec_return _      = Nothing
 
 response_error :: [Result] -> Maybe String -- {{{2
+-- | Convert the result list of a 'Gdbmi.Representation.Response' with 'Gdbmi.Representation.ResultClass' 'Gdbmi.Representation.RCError'.
 response_error [(Result variable value)] = do
   guard (variable == "msg")
   asConst value
 response_error _ = Nothing
 
 response_stopped :: [Result] -> Maybe Stopped -- {{{2
+-- | Convert the result list of a 'Gdbmi.Representation.Notification' with 'Gdbmi.Representation.NotificationClass' 'Gdbmi.Representation.Exec' and 'Gdbmi.Representation.AsyncClass' 'Gdbmi.Representation.ACStop'.
 response_stopped items = responseStopped items
 
-response_exec_return :: [Result] -> Maybe Frame -- {{{2
-response_exec_return [item] = responseFrame item
-response_exec_return _      = Nothing
-  
 -- utils {{{1
 get :: [Result] -> (String -> Maybe a) -> (String -> Maybe a) -- {{{2
 get rs parse key = find ((key==) . resVariable) rs >>= asConst . resValue >>= parse

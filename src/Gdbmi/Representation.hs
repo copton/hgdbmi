@@ -1,4 +1,55 @@
-module Gdbmi.Representation where
+-- | Data structures, parsers and printers for GDB/MI communication.
+--
+-- This is a low-level module not intended to be used by clients of this library.
+-- Use 'Gdbmi.Commands' to create commands and receive responses as well as notifications via 'Gdbmi.IO'.
+--
+-- On-the-wire types reflect the GDB/MI grammar. Please consult the cited GDB documentation for details.
+-- The simplified types provide a simple abstraction over the on-the-wire types.
+module Gdbmi.Representation
+-- exports {{{1
+(
+  -- * On-the-Wire Types
+  -- ** Input
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Input-Syntax.html>
+  Command(..),
+  Token,
+  Operation,
+  Option(..),
+  Parameter(..),
+  -- ** Output
+  -- | <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Output-Syntax.html>
+  Output(..),
+  ResultRecord(..),
+  OutOfBandRecord(..),
+  AsyncRecord(..), 
+  ExecAsyncOutput(..),
+  StatusAsyncOutput(..),
+  NotifyAsyncOutput(..),
+  AsyncOutput(..),
+  ResultClass(..),
+  AsyncClass(..),
+  Result(..),
+  Variable,
+  Value(..), Const, Tuple(..), List(..),
+  StreamRecord(..),
+  ConsoleStreamOutput(..),
+  TargetStreamOutput(..),
+  LogStreamOutput(..),
+  CString,
+  -- * Simplified
+  Response(..),
+  Notification(..), NotificationClass(..),
+  Stream(..), StreamClass(..),
+  -- * Functions
+  render_command,
+  parse_output,
+  output_response,
+  output_notification,
+  output_stream,
+  GetToken(..),
+  asConst, asTuple, asList,
+  parameter_valid
+) where
 
 -- imports {{{1
 import Control.Applicative ((<$>), (<*>), (<*))
@@ -25,6 +76,7 @@ data Parameter -- {{{3
 
 -- rendering {{{2
 render_command :: Command -> String -- {{{3
+-- | Generate the on-the-wire string suitable to be sent to GDB.
 render_command cmd = r_command cmd ""
 
 r_command :: Command -> ShowS -- {{{3
@@ -101,7 +153,6 @@ data ResultClass -- {{{3
   deriving (Show, Eq)
  
 data AsyncClass -- {{{3
--- much more stuff than the documentation specifies
   = ACStop
   | ACThreadGroupAdded
   | ACThreadGroupStarted
@@ -164,6 +215,7 @@ type CString = String -- {{{3
 
 -- parsing {{{2
 parse_output :: String -> Output -- {{{3
+-- | Turn an GDB output string to an 'Output' value.
 parse_output str = case parse p_output "gdb" str of
   Left pe -> error $ "parse failed: " ++ show pe
   Right o -> o
@@ -172,9 +224,9 @@ p_output :: Parser Output -- {{{3
 -- http://sourceware.org/bugzilla/show_bug.cgi?id=7708
 -- p_output = Output <$> many p_outOfBandRecord <*> optionMaybe p_resultRecord <* string "(gdb) " <* newline <* eof
 p_output = do
-  oob <- many p_outOfBandRecord
-  rr <- optionMaybe p_resultRecord
-  oob' <- many p_outOfBandRecord
+  oob  <- many        p_outOfBandRecord
+  rr   <- optionMaybe p_resultRecord
+  oob' <- many        p_outOfBandRecord
   string "(gdb) " >> newline >> eof
   return $ Output (oob ++ oob') rr
 
@@ -313,13 +365,15 @@ p_token = many1 digit >>= return . read
 
 -- simplification {{{1
 data Response -- {{{2
+  -- | The 'ResultRecord' of an 'Output'
   = Response {
       respClass   :: ResultClass
-    , respResults :: [Result]
+    , respResults :: [Result]   
     }
     deriving (Show)
 
 data Notification -- {{{2
+  -- | Simplification of the 'AsyncRecord' type hierarchie, a possible 'OutOfBandRecord' value of an 'Output'.
   = Notification {
       notiClass      :: NotificationClass
     , notiAsyncClass :: AsyncClass
@@ -328,26 +382,29 @@ data Notification -- {{{2
     deriving Show
 
 data NotificationClass -- {{{3
-  = Exec
-  | Status
-  | Notify
+  = Exec    -- ^ 'ARExecAsyncOutput'
+  | Status  -- ^ 'ARStatusAsyncOutput'
+  | Notify  -- ^ 'ARNotifyAsyncOutput'
   deriving (Show, Eq)
 
 data Stream -- {{{2
+  -- | Simplifcation of the 'StreamRecord' type hierarchie, a possible 'OutOfBandRecord' value of an 'Output'.
   = Stream StreamClass String
   deriving Show
 
 data StreamClass -- {{{3
-  = Console
-  | Target
-  | Log
+  = Console  -- ^ 'SRConsoleStreamOutput'
+  | Target   -- ^ 'SRTargetStreamOutpu'
+  | Log      -- ^ 'SRLogStreamOutput'
   deriving Show
 
 output_response :: Output -> Maybe Response -- {{{2
+-- | Extract the response from an output, if existent. 
 output_response (Output _ Nothing) = Nothing
 output_response (Output _ (Just (ResultRecord _ rc rs))) = Just $ Response rc rs
 
 output_notification :: Output -> [Notification] -- {{{2
+-- | Extract the (possible empty) list of notifications of an output.
 output_notification (Output oobs _) = map (notification . unp) $ filter isNotification oobs
   where
     isNotification (OOBAsyncRecord _) = True
@@ -361,6 +418,7 @@ output_notification (Output oobs _) = map (notification . unp) $ filter isNotifi
     notification (ARNotifyAsyncOutput (NotifyAsyncOutput _ (AsyncOutput ac rs))) = Notification Notify ac rs
 
 output_stream :: Output -> [Stream] -- {{{2
+-- | Extract the (possibly) empty list of notifications of an output.
 output_stream (Output oobs _) = map (stream . unp) $ filter isStream oobs
   where
     isStream (OOBStreamRecord _) = True
@@ -375,14 +433,17 @@ output_stream (Output oobs _) = map (stream . unp) $ filter isStream oobs
 
 -- utils {{{2
 asConst :: Value -> Maybe Const -- {{{2
+-- | Coerce a value to a const.
 asConst (VConst x) = Just x
 asConst _          = Nothing
 
 asTuple :: Value -> Maybe Tuple -- {{{2
+-- | Coerce a value to a tuple.
 asTuple (VTuple x) = Just x
 asTuple _          = Nothing
 
 asList  :: Value -> Maybe List -- {{{2
+-- | Coerce a value to a list.
 asList (VList x) = Just x
 asList _         = Nothing
 
@@ -390,7 +451,7 @@ asList _         = Nothing
 type Token = Int
 
 class GetToken a where
-  get_token :: a -> Maybe Token
+  get_token :: a -> Maybe Token -- ^ return the token of the given object, if existent.
 
 instance GetToken ResultRecord where
   get_token (ResultRecord token _ _) = token
@@ -423,20 +484,22 @@ instance GetToken NotifyAsyncOutput where
 
 -- utils {{{1
 parameter_valid :: Parameter -> Bool -- {{{2
+-- | Verify that the given parameter is either a c-string or a \"non-blank-sequence\".
+-- See <http://sourceware.org/gdb/current/onlinedocs/gdb/GDB_002fMI-Input-Syntax.html>
 parameter_valid (RawString s) = validParam s
 parameter_valid (QuotedString s) = validParam s
 
-validParam :: String -> Bool
+validParam :: String -> Bool -- {{{2
 validParam param 
   | null param = False
   | isCString param = isNothing $ find (not . isAscii) param
   | otherwise = isNothing $ find isSpecial param
   where
     isCString ('"':rest) = last rest == '"'
-    isCString _ = False
+    isCString _          = False
 
-    isSpecial ' ' = True
-    isSpecial '-' = True
+    isSpecial ' '  = True
+    isSpecial '-'  = True
     isSpecial '\n' = True
-    isSpecial '"' = True
-    isSpecial _ = False
+    isSpecial '"'  = True
+    isSpecial _    = False

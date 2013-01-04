@@ -1,7 +1,9 @@
+-- | Control execution of a GDB instance, send commands and receive results, notifications and stream information.
 module Gdbmi.IO
 -- exports {{{1
 (
-    Context, Callback(..)
+    Context, Config(..), Callback(..)
+  , default_config
   , setup, shutdown, send_command
 ) where
 
@@ -25,20 +27,20 @@ import qualified Gdbmi.Responses as S
 
 data Context = Context { -- {{{1
 -- gdb process {{{2
-    ctxProcess        :: ProcessHandle
-  , ctxCommandPipe    :: Handle
-  , ctxOutputPipe     :: Handle
-  , ctxLog            :: Maybe Handle
+    ctxProcess       :: ProcessHandle
+  , ctxCommandPipe   :: Handle
+  , ctxOutputPipe    :: Handle
+  , ctxLog           :: Maybe Handle
 -- callback
-  , ctxCallback       :: Callback
+  , ctxCallback      :: Callback
 -- threads
-  , ctxCommandThread  :: ThreadId
-  , ctxOutputThread   :: ThreadId
-  , ctxCurrentJob     :: MVar Job
-  , ctxFinished       :: MVar ()
+  , ctxCommandThread :: ThreadId
+  , ctxOutputThread  :: ThreadId
+  , ctxCurrentJob    :: MVar Job
+  , ctxFinished      :: MVar ()
 -- jobs
-  , ctxNextToken      :: TVar R.Token
-  , ctxJobs           :: TChan Job
+  , ctxNextToken     :: TVar R.Token
+  , ctxJobs          :: TChan Job
 }
 
 data Job = Job {
@@ -47,24 +49,44 @@ data Job = Job {
   , jobToken    :: R.Token
   }
 
+-- | Call-back functions for asynchronous GDB output.
+-- 
+-- Each call-back is called in a separate thread, so they may block.
+--
+-- Stop events are 'Gdbmi.Representation.Notification' events with 'R.NotificationClass' 'R.Exec' and 'R.AsyncClass' 'R.ACStop'.
+-- If 'cbStopped' is given stop events are delivered to that call-back instead of 'cbNotify'.
 data Callback  -- {{{1
   = Callback {
-      cbStream  :: R.Stream -> IO ()
-    , cbStopped :: S.Stopped -> IO ()
-    , cbNotify  :: R.Notification -> IO ()
+      cbStream  :: [R.Stream] -> IO ()          -- ^ call-back for 'Gdbmi.Representation.Stream' events
+    , cbNotify  :: [R.Notification] -> IO ()    -- ^ call-back for 'Gdbmi.Representation.Notification' events
+    , cbStopped :: Maybe ([S.Stopped] -> IO ()) -- ^ optionally a special call-back for 'Gdbmi.Responses.Stopped' events
   }
 
-setup :: Maybe FilePath -> Callback -> IO Context -- {{{1
-setup logfile callback = do
+-- | Configuration
+data Config -- {{{1
+  = Config {
+      confCommandLine :: [String]        -- ^ command line to execute. The library will add \"--interpreter mi\".
+    , confLogfile     :: Maybe FilePath  -- ^ optinonally a file path to a log file for GDB\/MI input and output
+  }
+
+default_config :: Config -- {{{2
+-- | Default configuration: "gdb" command line, no log file
+default_config = Config ["gdb"] Nothing
+
+setup :: Config -> Callback -> IO Context -- {{{1
+-- | Launch a GDB instance in Machine Interface mode.
+--
+-- The child process is run in a new session to avoid receiving SIGINTs when issuing -exec-interrupt.
+setup config callback = do
   (commandR,  commandW)  <- createPipe >>= asHandles
   (outputR, outputW) <- createPipe >>= asHandles
-  phandle <- runProcess "setsid" (words "schroot -c quantal -p -- gdb --interpreter mi") -- avoid receiving SIGINTs when issuing -exec-interrupt
+  phandle <- runProcess "setsid" (confCommandLine config ++ ["--interpreter", "mi"])
                  Nothing Nothing
                  (Just commandR)
                  (Just outputW)
                  Nothing
   mapM_ (`hSetBuffering` LineBuffering) [commandW, outputR]
-  logH <- case logfile of
+  logH <- case (confLogfile config) of
     Nothing -> return Nothing
     Just "-" -> return $ Just stdout
     Just f -> fmap Just $ openFile f WriteMode
@@ -85,6 +107,7 @@ setup logfile callback = do
     return (h1, h2)
 
 shutdown :: Context -> IO () -- {{{1
+-- | Shut down the GDB instance and all resources associated with the 'Context'.
 shutdown ctx = do
   mapM_ (killThread . ($ctx)) [ctxCommandThread, ctxOutputThread]
   replicateM_ 2 (takeMVar (ctxFinished ctx))
@@ -94,6 +117,9 @@ shutdown ctx = do
   return ()
 
 send_command :: Context -> R.Command -> IO R.Response -- {{{1
+-- | Send a GDB command and wait for the response.
+--
+-- This function is thread safe, i.e., it can be called by multiple threads in an interleaved fashion.
 send_command ctx command = checkShutdown >> sendCommand >>= receiveResponse
   where
     checkShutdown = do
@@ -111,7 +137,6 @@ send_command ctx command = checkShutdown >> sendCommand >>= receiveResponse
     
     receiveResponse = atomically . takeTMVar
 
-
 -- implementation {{{1
 handleCommands :: Context -> IO () -- {{{2
 handleCommands ctx = handleKill ctx $ do
@@ -123,16 +148,7 @@ handleCommands ctx = handleKill ctx $ do
 handleOutput :: Context -> IO () -- {{{2
 handleOutput ctx = handleKill ctx $ do
   output  <- readOutput ctx
-  _ <- forkIO $
-    let
-      streams = R.output_stream output
-      notifications = R.output_notification output
-      (stops, others) = partition ((&&) <$> (R.Exec==) . R.notiClass <*> (R.ACStop==) . R.notiAsyncClass) notifications
-      Just stops' = sequence $ map (S.response_stopped . R.notiResults) stops
-    in do
-      mapM_ ((cbStream . ctxCallback) ctx)  streams
-      mapM_ ((cbNotify . ctxCallback) ctx)  others
-      mapM_ ((cbStopped . ctxCallback) ctx) stops'
+  _ <- callBack ctx output
   case R.output_response output of
     Nothing -> return ()
     Just response -> do
@@ -144,6 +160,29 @@ handleOutput ctx = handleKill ctx $ do
             then error $ "token missmatch! " ++ show (R.get_token output) ++ " vs. " ++ show (jobToken job)
             else atomically $ putTMVar (jobResponse job) response
   handleOutput ctx  
+
+callBack :: Context -> R.Output -> IO ()
+callBack ctx output =
+  let
+    callbacks       = ctxCallback ctx
+    streamsCb       = cbStream callbacks
+    notifyCb        = cbNotify callbacks
+    stoppedCbMb     = cbStopped callbacks
+
+    streams         = R.output_stream output
+    notifications   = R.output_notification output
+    (stops, others) = partition ((&&) <$> (R.Exec==) . R.notiClass <*> (R.ACStop==) . R.notiAsyncClass) notifications
+    Just stops'     = sequence $ map (S.response_stopped . R.notiResults) stops
+  in case stoppedCbMb of
+    Nothing -> do
+      _ <- forkIO (streamsCb streams)
+      _ <- forkIO (notifyCb notifications)
+      return ()
+    Just stoppedCb -> do
+      _ <- forkIO (streamsCb streams)
+      _ <- forkIO (notifyCb  others)
+      _ <- forkIO (stoppedCb stops')
+      return ()
 
 handleKill :: Context -> IO () -> IO ()
 handleKill ctx action = catchJust select action handler

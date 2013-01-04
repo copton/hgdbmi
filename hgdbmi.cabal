@@ -45,7 +45,6 @@ library
     stm         == 2.3.*
 
   exposed-modules:
-    Gdbmi
     Gdbmi.IO
     Gdbmi.Commands
     Gdbmi.Representation

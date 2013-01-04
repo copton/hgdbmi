@@ -1,6 +1,6 @@
--- | Constructor functions for 'Gdmi.Commands.Command' values.
+-- | Constructor functions for 'Gdmi.Representation.Command' values.
 -- 
--- Please consult the GDB\/MI documentation for the semantics of the commands.
+-- Please consult the cited GDB documentation for the semantics of the individual commands.
 module Gdbmi.Commands
 -- {{{1 exports
 (
@@ -178,15 +178,17 @@ module Gdbmi.Commands
   Medium(..),
   Interpreter(..),
    
-  -- * Internal Functions
+  -- * Helper Functions
+  cli_command,
   set_token
 ) where
 
 -- imports {{{1
 import Data.List (intersperse)
 import Data.Maybe (fromMaybe)
-import Gdbmi.Representation hiding (Exec, Console)
 import Prelude hiding (reverse, all, lines)
+
+import Gdbmi.Representation (Command(..), Option(..), Token, Parameter(..), render_command)
 
 -- types {{{1
 class GdbShow a where -- {{{2
@@ -416,7 +418,15 @@ set_token :: Token -> Command -> Command -- {{{2
 -- Newly created commands have no token, but setting a token manually is usually not necessary.
 -- 'Gdbmi.IO.send_command' will assign a unique token to a given command in any case.
 set_token token (MICommand _ x y z) = MICommand (Just token) x y z
-set_token token (CLICommand _ x) = CLICommand (Just token) x
+set_token token (CLICommand _ x)    = CLICommand (Just token) x
+
+cli_command :: String -> Command
+-- | Create a CLI command, i.e., use the provided string literaly.
+-- 
+-- Some GDB commands are not reflected in the Machine Interface. In those
+-- cases one has to resort to Command Line Interface commands, which the MI
+-- accepts as well.
+cli_command = CLICommand Nothing
 
 -- commands {{{1
 -- breakpoint commands {{{2
