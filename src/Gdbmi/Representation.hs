@@ -449,9 +449,10 @@ asList _         = Nothing
 
 -- token {{{1
 type Token = Int
-
+ 
+-- | Return the token of the given object, if existent.
 class GetToken a where
-  get_token :: a -> Maybe Token -- ^ return the token of the given object, if existent.
+  get_token :: a -> Maybe Token 
 
 instance GetToken ResultRecord where
   get_token (ResultRecord token _ _) = token
