@@ -16,7 +16,7 @@ module Gdbmi.Semantics
   notification_stopped,
   -- * Types
   -- | Please consult the GDB manual for details on the returned responses.
-  Breakpoint(..), BreakpointType, BreakpointDisp(..),
+  Breakpoint(..), BreakpointType, BreakpointDisp(..), BkptNumber,
   Stack(..), Frame(..), Arg(..),
   Stopped(..), StopReason(..)
 ) where
