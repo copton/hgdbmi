@@ -1,9 +1,9 @@
--- | Data structures and conversion functions for GDB command responses.
+-- | Semantical data structures and conversion functions for GDB\/MI output.
 --  
 -- While working with 'Gdbmi.Representation.Response' and 'Gdbmi.Representation.Notification' is always possible in general, handling the generic 'Gdbmi.Representation.Result' lists is cumbersome. This module provides convenient data types instead to facilitate pattern matching etc..
 --  
 -- This module is incomplete, as we only implemented what we needed up to now.
-module Gdbmi.Responses
+module Gdbmi.Semantics
 -- export {{{1
 (
   -- * Conversion Functions  
@@ -13,7 +13,7 @@ module Gdbmi.Responses
   response_exec_return,
   response_stack_list_frames,
   response_error,
-  response_stopped,
+  notification_stopped,
   -- * Types
   -- | Please consult the GDB manual for details on the returned responses.
   Breakpoint(..), BreakpointType, BreakpointDisp(..),
@@ -173,7 +173,7 @@ responseArg rs = do
     <$> get rs Just "name"
     <*> get rs Just "value"
 
--- responses {{{1
+-- functions {{{1
 response_stack_list_frames :: [Result] -> Maybe Stack -- {{{2
 -- | Convert the result list of a 'Gdbmi.Commands.stack_list_frames' command response.
 response_stack_list_frames [item] = responseStack item
@@ -203,9 +203,9 @@ response_error [(Result variable value)] = do
   asConst value
 response_error _ = Nothing
 
-response_stopped :: [Result] -> Maybe Stopped -- {{{2
+notification_stopped :: [Result] -> Maybe Stopped -- {{{2
 -- | Convert the result list of a 'Gdbmi.Representation.Notification' with 'Gdbmi.Representation.NotificationClass' 'Gdbmi.Representation.Exec' and 'Gdbmi.Representation.AsyncClass' 'Gdbmi.Representation.ACStop'.
-response_stopped items = responseStopped items
+notification_stopped items = responseStopped items
 
 -- utils {{{1
 get :: [Result] -> (String -> Maybe a) -> (String -> Maybe a) -- {{{2

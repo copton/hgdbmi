@@ -3,7 +3,7 @@ module Main (main) where
 
 -- imports {{{1
 import Gdbmi.Representation
-import Gdbmi.Responses
+import Gdbmi.Semantics
 import Test.Framework                 (Test, defaultMain, testGroup)
 import Test.Framework.Providers.HUnit (testCase)
 import Test.HUnit                     ((@=?), Assertion)
@@ -246,7 +246,7 @@ test_response_stopped = enumTestGroup "response_stopped" $ map runTest [
       let
         output = parse_output (tail str)
         [notification] = output_notification output
-        stp' = response_stopped (notiResults notification)
+        stp' = notification_stopped (notiResults notification)
       in
         show (Just stp) @=? show stp'
 

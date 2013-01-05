@@ -1,4 +1,26 @@
 {-# LANGUAGE QuasiQuotes #-}
+{-
+ - Test the IO interface of hgdbmi.
+ -
+ - Requirements:
+ -    - gdb (see config)
+ -    - gcc (see setup)
+ -
+ - Steps:
+ -    - create temporary directory
+ -    - write test program (example)
+ -    - compile test program with debugging
+ -    - start debugger
+ -    - set breakpoint
+ -    - run debugger
+ -    - wait for stop event, evaluate variable and continue (10 times)
+ -    - quit
+ -    - dump log file
+ -
+ - Output:
+ -    - stream and notification events (excluding stop events)
+ -    - log file with GDB/MI communication
+-}
 module Main (main) where
 
 import Control.Concurrent     (newEmptyMVar, putMVar, takeMVar, MVar)
@@ -13,12 +35,12 @@ import Text.Printf            (printf)
 import Paste (paste)
 
 import qualified Gdbmi.IO             as G
-import qualified Gdbmi.Commands       as G
-import qualified Gdbmi.Responses      as G
-import qualified Gdbmi.Representation as G
+import qualified Gdbmi.Commands       as C
+import qualified Gdbmi.Semantics      as S
+import qualified Gdbmi.Representation as R
 
 config :: G.Config
-config = G.Config (words "schroot -c quantal -p -- gdb") (Just "gdb.log")
+config = G.Config ["gdb"] (Just "gdb.log")
 
 example :: String
 example = [paste|
@@ -37,7 +59,7 @@ int main() {
 }
 |]
 
-callback :: MVar [G.Stopped] -> G.Callback
+callback :: MVar [S.Stopped] -> G.Callback
 callback mv = G.Callback print print (Just (putMVar mv))
 
 setup :: IO ()
@@ -51,15 +73,15 @@ setup = do
       error $ printf "failed to execute gcc: %s" (show ec')
     ExitSuccess -> return ()
 
-command :: G.Context -> G.ResultClass -> G.Command -> IO [G.Result]
+command :: G.Context -> R.ResultClass -> R.Command -> IO [R.Result]
 command ctx rc cmd = do
   resp <- G.send_command ctx cmd
   let msg = printf "command '%s' failed (%s): %s"
-              (G.render_command cmd)
-              (show (G.respClass resp))
-              ((show . G.response_error . G.respResults) resp)
-  when (G.respClass resp /= rc) (error msg)
-  return (G.respResults resp)
+              (R.render_command cmd)
+              (show (R.respClass resp))
+              ((show . S.response_error . R.respResults) resp)
+  when (R.respClass resp /= rc) (error msg)
+  return (R.respResults resp)
 
 assert :: (Eq a, Show a) => String -> a -> a -> IO ()
 assert what x y = if (x == y)
@@ -72,19 +94,19 @@ test = do
   mv           <- newEmptyMVar
   ctx          <- G.setup config (callback mv)
   let cmd       = command ctx
-  _            <- cmd G.RCDone $ G.cli_command "tty /dev/null"
-  _            <- cmd G.RCDone $ G.file_exec_and_symbols (Just "example")
-  let loc       = G.file_function_location "example.c" "print"
-  bp'          <- cmd G.RCDone $ G.break_insert False False False False False Nothing Nothing Nothing loc
-  let (Just bp) = G.response_break_insert bp'
-  _            <- cmd G.RCRunning $ G.exec_run (Left True)
+  _            <- cmd R.RCDone $ C.cli_command "tty /dev/null"
+  _            <- cmd R.RCDone $ C.file_exec_and_symbols (Just "example")
+  let loc       = C.file_function_location "example.c" "print"
+  bp'          <- cmd R.RCDone $ C.break_insert False False False False False Nothing Nothing Nothing loc
+  let (Just bp) = S.response_break_insert bp'
+  _            <- cmd R.RCRunning $ C.exec_run (Left True)
   forM_ [(0::Int)..10] (\counter -> do
       [stopped]      <- takeMVar mv 
-      assert "breakpoint number" ((G.bkptHitNumber . G.stoppedReason) stopped) (G.bkptNumber bp)
-      value'          <- cmd G.RCDone $ G.data_evaluate_expression "i"
-      let (Just value) = G.response_data_evaluate_expression value'
+      assert "breakpoint number" ((S.bkptHitNumber . S.stoppedReason) stopped) (S.bkptNumber bp)
+      value'          <- cmd R.RCDone $ C.data_evaluate_expression "i"
+      let (Just value) = S.response_data_evaluate_expression value'
       assert "value of i" value (show counter)
-      _               <- cmd G.RCRunning $ G.exec_continue False (Left True)
+      _               <- cmd R.RCRunning $ C.exec_continue False (Left True)
       return ()
     )
   G.shutdown ctx

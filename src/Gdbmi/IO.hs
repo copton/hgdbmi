@@ -28,9 +28,9 @@ import System.IO (Handle, hSetBuffering, BufferMode(LineBuffering), hPutStr, hWa
 import System.Posix.IO (fdToHandle, createPipe)
 import System.Process (ProcessHandle, runProcess, waitForProcess)
 
-import qualified Gdbmi.Commands as C
+import qualified Gdbmi.Commands       as C
 import qualified Gdbmi.Representation as R
-import qualified Gdbmi.Responses as S
+import qualified Gdbmi.Semantics      as S
 
 data Context = Context { -- {{{1
 -- gdb process {{{2
@@ -66,7 +66,7 @@ data Callback  -- {{{1
   = Callback {
       cbStream  :: [R.Stream] -> IO ()          -- ^ call-back for 'Gdbmi.Representation.Stream' events
     , cbNotify  :: [R.Notification] -> IO ()    -- ^ call-back for 'Gdbmi.Representation.Notification' events
-    , cbStopped :: Maybe ([S.Stopped] -> IO ()) -- ^ optionally a special call-back for 'Gdbmi.Responses.Stopped' events
+    , cbStopped :: Maybe ([S.Stopped] -> IO ()) -- ^ optionally a special call-back for 'Gdbmi.Semantics.Stopped' events
   }
 
 -- | Configuration
@@ -187,7 +187,7 @@ callBack ctx output = forkIO go >> return ()
         streams         = R.output_stream output
         notifications   = R.output_notification output
         (stops, others) = partition ((&&) <$> (R.Exec==) . R.notiClass <*> (R.ACStop==) . R.notiAsyncClass) notifications
-        Just stops'     = sequence $ map (S.response_stopped . R.notiResults) stops
+        Just stops'     = sequence $ map (S.notification_stopped . R.notiResults) stops
       in case stoppedCbMb of
         Nothing -> do
           when (not (null streams))       (streamsCb streams)
