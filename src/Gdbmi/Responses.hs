@@ -9,7 +9,7 @@ module Gdbmi.Responses
   -- * Conversion Functions  
   -- | A conversion fails if the result list does not contain the expected values.
   response_break_insert,
-  response_var_evaluate_expression,
+  response_data_evaluate_expression,
   response_exec_return,
   response_stack_list_frames,
   response_error,
@@ -184,12 +184,12 @@ response_break_insert :: [Result] -> Maybe Breakpoint -- {{{2
 response_break_insert [item] = responseBreakpoint item
 response_break_insert _      = Nothing
 
-response_var_evaluate_expression :: [Result] -> Maybe String -- {{{2
--- | Convert the result list of a 'Gdbmi.Commands.var_evaluate_expression' command response.
-response_var_evaluate_expression [(Result variable value)] = do
+response_data_evaluate_expression :: [Result] -> Maybe String -- {{{2
+-- | Convert the result list of a 'Gdbmi.Commands.data_evaluate_expression' command response.
+response_data_evaluate_expression [(Result variable value)] = do
   guard  (variable == "value")
   asConst value
-response_var_evaluate_expression _ = Nothing
+response_data_evaluate_expression _ = Nothing
 
 response_exec_return :: [Result] -> Maybe Frame -- {{{2
 -- | Convert the result list of a 'Gdbmi.Commands.exec_return' command response.

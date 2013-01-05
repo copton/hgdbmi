@@ -19,7 +19,7 @@ main = defaultMain [
         , test_response_stopped
         , test_response_stack_list_frames
         , test_response_exec_return
-        , test_response_var_evaluate_expression
+        , test_response_data_evaluate_expression
         , test_response_error
         ]
 
@@ -302,8 +302,8 @@ test_response_exec_return = enumTestGroup "response_exec_return" $ map runTest [
       in
         show (Just frame) @=? show frame'
 
-test_response_var_evaluate_expression :: Test -- {{{2
-test_response_var_evaluate_expression = enumTestGroup "response_var_evaluate_expression" $ map runTest [
+test_response_data_evaluate_expression :: Test -- {{{2
+test_response_data_evaluate_expression = enumTestGroup "response_data_evaluate_expression" $ map runTest [
     -- example {{{3
     ([paste|
 ^done,value="24"
@@ -318,7 +318,7 @@ test_response_var_evaluate_expression = enumTestGroup "response_var_evaluate_exp
         (Just response) = output_response output
       in do
         RCDone @=? respClass response
-        Just expr @=? (response_var_evaluate_expression . respResults) response
+        Just expr @=? (response_data_evaluate_expression . respResults) response
 
 test_response_error :: Test -- {{{2
 test_response_error = enumTestGroup "response_error" $ map runTest [

@@ -1,4 +1,11 @@
 -- | Control execution of a GDB instance, send commands and receive results, notifications and stream information.
+--
+-- Due to <http://sourceware.org/bugzilla/show_bug.cgi?id=8759> the first command issued should be to set the output terminal for GDB to \/dev\/null. Unfortunatelly, there is no MI command for this, so we have to resort to the CLI command \"tty\". For example:
+--
+-- >>> ctx  <- setup config callback
+-- >>> resp <- send_command ctx (cli_command "tty /dev/null")
+-- >>> when (respClass resp /= RCDone) (error ("unexpected response: " ++ show resp))
+--
 module Gdbmi.IO
 -- exports {{{1
 (
@@ -13,11 +20,11 @@ import Control.Concurrent (forkIO, killThread, ThreadId, MVar, newEmptyMVar, try
 import Control.Concurrent.STM (TVar, TChan, TMVar, newEmptyTMVar, newTVarIO, newTChanIO, atomically, takeTMVar, readTVar, writeTVar, writeTChan, readTChan, putTMVar)
 import Control.Exception (catchJust)
 import Control.Exception.Base (AsyncException(ThreadKilled))
-import Control.Monad (replicateM_)
+import Control.Monad (replicateM_, when)
 import Control.Monad.Fix (mfix)
 import Data.List (partition)
 import Prelude hiding (catch, interact)
-import System.IO (Handle, hSetBuffering, BufferMode(LineBuffering), hPutStr, hWaitForInput, hGetLine, IOMode(WriteMode), stdout, openFile, hFlush)
+import System.IO (Handle, hSetBuffering, BufferMode(LineBuffering), hPutStr, hWaitForInput, hGetLine, IOMode(WriteMode), stdout, openFile, hFlush, hClose)
 import System.Posix.IO (fdToHandle, createPipe)
 import System.Process (ProcessHandle, runProcess, waitForProcess)
 
@@ -51,7 +58,7 @@ data Job = Job {
 
 -- | Call-back functions for asynchronous GDB output.
 -- 
--- Each call-back is called in a separate thread, so they may block.
+-- The call-backs are called in a separate thread per GDB output, so they may block.
 --
 -- Stop events are 'Gdbmi.Representation.Notification' events with 'R.NotificationClass' 'R.Exec' and 'R.AsyncClass' 'R.ACStop'.
 -- If 'cbStopped' is given stop events are delivered to that call-back instead of 'cbNotify'.
@@ -66,7 +73,7 @@ data Callback  -- {{{1
 data Config -- {{{1
   = Config {
       confCommandLine :: [String]        -- ^ command line to execute. The library will add \"--interpreter mi\".
-    , confLogfile     :: Maybe FilePath  -- ^ optinonally a file path to a log file for GDB\/MI input and output
+    , confLogfile     :: Maybe FilePath  -- ^ optinonally a file path to a log file for GDB\/MI input and output. \'-\' means stdout.
   }
 
 default_config :: Config -- {{{2
@@ -79,7 +86,7 @@ setup :: Config -> Callback -> IO Context -- {{{1
 -- The child process is run in a new session to avoid receiving SIGINTs when issuing -exec-interrupt.
 setup config callback = do
   (commandR,  commandW)  <- createPipe >>= asHandles
-  (outputR, outputW) <- createPipe >>= asHandles
+  (outputR,   outputW)   <- createPipe >>= asHandles
   phandle <- runProcess "setsid" (confCommandLine config ++ ["--interpreter", "mi"])
                  Nothing Nothing
                  (Just commandR)
@@ -87,14 +94,15 @@ setup config callback = do
                  Nothing
   mapM_ (`hSetBuffering` LineBuffering) [commandW, outputR]
   logH <- case (confLogfile config) of
-    Nothing -> return Nothing
-    Just "-" -> return $ Just stdout
-    Just f -> fmap Just $ openFile f WriteMode
+    Nothing  -> return    $ Nothing
+    Just "-" -> return    $ Just stdout
+    Just f   -> fmap Just $ openFile f WriteMode
+
   currentJob <- newEmptyMVar
-  finished <- newEmptyMVar
-  nextToken <- newTVarIO 0
-  jobs <- newTChanIO
-  ctx <- mfix (\ctx -> do
+  finished   <- newEmptyMVar
+  nextToken  <- newTVarIO 0
+  jobs       <- newTChanIO
+  ctx        <- mfix (\ctx -> do
       itid <- forkIO (handleCommands ctx)
       otid <- forkIO (handleOutput ctx)
       return $ Context phandle commandW outputR logH callback itid otid currentJob finished nextToken jobs
@@ -114,7 +122,12 @@ shutdown ctx = do
   writeCommand ctx C.gdb_exit 0
   _ <- waitForProcess (ctxProcess ctx)
   putMVar (ctxFinished ctx) ()
-  return ()
+  case ctxLog ctx of
+    Nothing -> return ()
+    Just handle -> 
+      if handle /= stdout
+        then hClose handle
+        else return ()
 
 send_command :: Context -> R.Command -> IO R.Response -- {{{1
 -- | Send a GDB command and wait for the response.
@@ -162,27 +175,27 @@ handleOutput ctx = handleKill ctx $ do
   handleOutput ctx  
 
 callBack :: Context -> R.Output -> IO ()
-callBack ctx output =
-  let
-    callbacks       = ctxCallback ctx
-    streamsCb       = cbStream callbacks
-    notifyCb        = cbNotify callbacks
-    stoppedCbMb     = cbStopped callbacks
+callBack ctx output = forkIO go >> return ()
+  where
+    go =
+      let
+        callbacks       = ctxCallback ctx
+        streamsCb       = cbStream callbacks
+        notifyCb        = cbNotify callbacks
+        stoppedCbMb     = cbStopped callbacks
 
-    streams         = R.output_stream output
-    notifications   = R.output_notification output
-    (stops, others) = partition ((&&) <$> (R.Exec==) . R.notiClass <*> (R.ACStop==) . R.notiAsyncClass) notifications
-    Just stops'     = sequence $ map (S.response_stopped . R.notiResults) stops
-  in case stoppedCbMb of
-    Nothing -> do
-      _ <- forkIO (streamsCb streams)
-      _ <- forkIO (notifyCb notifications)
-      return ()
-    Just stoppedCb -> do
-      _ <- forkIO (streamsCb streams)
-      _ <- forkIO (notifyCb  others)
-      _ <- forkIO (stoppedCb stops')
-      return ()
+        streams         = R.output_stream output
+        notifications   = R.output_notification output
+        (stops, others) = partition ((&&) <$> (R.Exec==) . R.notiClass <*> (R.ACStop==) . R.notiAsyncClass) notifications
+        Just stops'     = sequence $ map (S.response_stopped . R.notiResults) stops
+      in case stoppedCbMb of
+        Nothing -> do
+          when (not (null streams))       (streamsCb streams)
+          when (not (null notifications)) (notifyCb notifications)
+        Just stoppedCb -> do
+          when (not (null streams))       (streamsCb streams)
+          when (not (null others))        (notifyCb others)
+          when (not (null stops'))        (stoppedCb stops')
 
 handleKill :: Context -> IO () -> IO ()
 handleKill ctx action = catchJust select action handler
