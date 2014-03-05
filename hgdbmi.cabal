@@ -38,9 +38,9 @@ library
   build-depends:
     base        >= 4 && < 5,
     parsec      == 3.1.*,
-    process     == 1.1.*,
-    unix        == 2.6.*,
-    stm         == 2.3.*
+    process     >= 1.1 && < 1.3,
+    unix        >= 2.6 && < 2.8,
+    stm         >= 2.3 && < 2.5
 
   exposed-modules:
     Gdbmi.IO
@@ -63,8 +63,8 @@ test-suite pure
     hgdbmi,
     base                 >= 4 && < 5,
     HUnit                == 1.2.*,
-    test-framework       == 0.6.*,
-    test-framework-hunit == 0.2.*,
+    test-framework       >= 0.6 && < 0.9,
+    test-framework-hunit >= 0.2 && < 0.4,
     template-haskell 
 
 
@@ -79,6 +79,6 @@ test-suite io
     hgdbmi,
     base                 >= 4 && < 5,
     directory            == 1.2.*,
-    process              == 1.1.*,
-    temporary            == 1.1.*,
+    process              >= 1.1 && < 1.3,
+    temporary            >= 1.1 && < 1.3,
     template-haskell 
